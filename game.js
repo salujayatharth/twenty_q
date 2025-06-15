@@ -96,6 +96,11 @@ class TwentyQuestionsGame {
         this.addAIMessage(question);
         this.currentQuestionP.textContent = question;
         this.updateDisplay();
+        
+        // Ensure scroll after all DOM updates
+        requestAnimationFrame(() => {
+            this.scrollToBottom();
+        });
     }
 
     getNextIntelligentQuestion() {
@@ -145,8 +150,10 @@ class TwentyQuestionsGame {
         }
 
         this.updateDisplay();
-        // Ensure we scroll to bottom after all operations
-        this.scrollToBottom();
+        // Ensure we scroll to bottom after all DOM operations are complete
+        requestAnimationFrame(() => {
+            this.scrollToBottom();
+        });
     }
 
     shouldMakeGuess() {
@@ -177,6 +184,11 @@ class TwentyQuestionsGame {
         
         // Create special guess controls
         this.createGuessControls();
+        
+        // Ensure scroll after DOM modifications
+        requestAnimationFrame(() => {
+            this.scrollToBottom();
+        });
     }
 
     createGuessControls() {
@@ -206,8 +218,10 @@ class TwentyQuestionsGame {
                 }, 1500);
             }
         }
-        // Ensure we scroll to bottom after handling guess result
-        this.scrollToBottom();
+        // Ensure we scroll to bottom after all DOM operations are complete
+        requestAnimationFrame(() => {
+            this.scrollToBottom();
+        });
     }
 
     endGame(won) {
