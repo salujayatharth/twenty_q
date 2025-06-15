@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Twenty Questions - LLM Game</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎯 Twenty Questions</h1>
+            <p>Think of something and let me guess it in 20 questions!</p>
+        </header>
+
+        <div class="game-container">
+            <div class="status-bar">
+                <div class="question-counter">
+                    <span>Questions remaining: <span id="questions-left">20</span></span>
+                </div>
+                <div class="game-status">
+                    <span id="game-status">Think of something...</span>
+                </div>
+            </div>
+
+            <div class="chat-container" id="chat-container">
+                <div class="welcome-message">
+                    <p>Welcome to Twenty Questions!</p>
+                    <p>Think of any object, person, place, or concept, then click "Start Game" to begin.</p>
+                </div>
+            </div>
+
+            <div class="controls">
+                <div class="game-controls" id="game-controls">
+                    <button id="start-btn" class="btn btn-primary">Start Game</button>
+                    <button id="restart-btn" class="btn btn-secondary" style="display: none;">New Game</button>
+                </div>
+
+                <div class="answer-controls" id="answer-controls" style="display: none;">
+                    <p class="current-question" id="current-question"></p>
+                    <div class="answer-buttons">
+                        <button class="btn btn-yes" onclick="answerQuestion('yes')">Yes</button>
+                        <button class="btn btn-no" onclick="answerQuestion('no')">No</button>
+                        <button class="btn btn-maybe" onclick="answerQuestion('maybe')">Maybe</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p>Powered by AI • <a href="https://github.com/salujayatharth/twenty_q">GitHub</a></p>
+        </footer>
+    </div>
+
+    <script src="game.js"></script>
+</body>
+</html>
