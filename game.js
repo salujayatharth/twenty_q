@@ -20,6 +20,7 @@ class TwentyQuestionsGame {
         this.questionsLeftSpan = document.getElementById('questions-left');
         this.gameStatusSpan = document.getElementById('game-status');
         this.currentQuestionP = document.getElementById('current-question');
+        this.funkyCounter = document.getElementById('counter-number');
     }
 
     bindEvents() {
@@ -266,6 +267,10 @@ class TwentyQuestionsGame {
 
     updateDisplay() {
         this.questionsLeftSpan.textContent = this.questionsRemaining;
+        
+        // Update funky counter to show questions asked (20 - remaining)
+        const questionsAsked = 20 - this.questionsRemaining;
+        this.funkyCounter.textContent = questionsAsked;
         
         if (this.gameActive) {
             this.gameStatusSpan.textContent = "Game in progress...";
