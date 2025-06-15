@@ -5,7 +5,7 @@ const gameConfiguration = {
     // LLM Provider Configuration
     llm: {
         provider: 'openai', // Options: 'openai', 'anthropic', 'cohere'
-        apiKey: 'your-api-key-here',
+        apiKey: (typeof process !== 'undefined' && process.env && process.env.OPENAI_API_KEY) || 'your-api-key-here',
         model: 'gpt-3.5-turbo', // or 'claude-3-sonnet', etc.
         
         // API endpoints (usually don't need to change these)

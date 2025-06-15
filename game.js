@@ -330,14 +330,36 @@ class LLMIntegration {
     }
 }
 
-// Example configuration for LLM integration
-// Uncomment and configure when ready to add LLM features
-/*
-const llmConfig = {
-    provider: 'openai', // or 'anthropic', 'cohere', etc.
-    apiKey: 'your-api-key-here',
-    model: 'gpt-3.5-turbo'
-};
+// Load configuration with environment variable support
+function loadConfiguration() {
+    // Try to load config.js if it exists (browser environment)
+    if (typeof window !== 'undefined') {
+        // In browser, config should be loaded via script tag or other means
+        return typeof gameConfiguration !== 'undefined' ? gameConfiguration : null;
+    }
+    
+    // In Node.js environment, try to require config
+    try {
+        if (typeof require !== 'undefined') {
+            return require('./config.js');
+        }
+    } catch (e) {
+        // Fallback to example config structure with environment variable
+        return {
+            llm: {
+                provider: 'openai',
+                apiKey: (typeof process !== 'undefined' && process.env && process.env.OPENAI_API_KEY) || 'your-api-key-here',
+                model: 'gpt-3.5-turbo'
+            }
+        };
+    }
+    
+    return null;
+}
 
-const llm = new LLMIntegration(llmConfig.apiKey, llmConfig.provider);
-*/
+// Initialize LLM integration if configuration is available
+let llm = null;
+const config = loadConfiguration();
+if (config && config.llm && config.llm.apiKey && config.llm.apiKey !== 'your-api-key-here') {
+    llm = new LLMIntegration(config.llm.apiKey, config.llm.provider);
+}
