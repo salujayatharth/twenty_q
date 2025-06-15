@@ -275,7 +275,25 @@ class TwentyQuestionsGame {
         `;
     }
 
+    isScrolledToBottom() {
+        const threshold = 5; // Small threshold to account for rounding errors
+        // If content doesn't exceed container height, we're always considered "at bottom"
+        if (this.chatContainer.scrollHeight <= this.chatContainer.clientHeight) {
+            return true;
+        }
+        return this.chatContainer.scrollTop + this.chatContainer.clientHeight >= 
+               this.chatContainer.scrollHeight - threshold;
+    }
+
     scrollToBottom() {
+        // Only auto-scroll if user is already at or near the bottom
+        if (this.isScrolledToBottom()) {
+            this.chatContainer.scrollTop = this.chatContainer.scrollHeight;
+        }
+    }
+
+    forceScrollToBottom() {
+        // Force scroll to bottom regardless of current position
         this.chatContainer.scrollTop = this.chatContainer.scrollHeight;
     }
 
