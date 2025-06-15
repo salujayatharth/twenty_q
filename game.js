@@ -138,10 +138,14 @@ class TwentyQuestionsGame {
             this.addSystemMessage("Thinking...");
             setTimeout(() => {
                 this.askNextQuestion();
+                // Ensure scroll after async question asking
+                this.scrollToBottom();
             }, 2000);
         }
 
         this.updateDisplay();
+        // Ensure we scroll to bottom after all operations
+        this.scrollToBottom();
     }
 
     shouldMakeGuess() {
@@ -196,9 +200,13 @@ class TwentyQuestionsGame {
             } else {
                 setTimeout(() => {
                     this.askNextQuestion();
+                    // Ensure scroll after async question asking
+                    this.scrollToBottom();
                 }, 1500);
             }
         }
+        // Ensure we scroll to bottom after handling guess result
+        this.scrollToBottom();
     }
 
     endGame(won) {
