@@ -175,6 +175,10 @@ export OPENAI_API_KEY=your-openai-api-key-here
 1. **Copy** `config.example.js` to `config.js`
 2. **Add** your API credentials  
 3. **Select** your preferred LLM provider
+4. **Add** the config script to `index.html` by adding this line before the `</body>` tag:
+   ```html
+   <script src="config.js"></script>
+   ```
 
 > **💡 Pro Tip**: The environment variable takes precedence over the configuration file when both are available.
 

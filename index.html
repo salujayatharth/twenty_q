@@ -60,20 +60,7 @@
         </div>
     </div>
 
-    <!-- Load configuration if available -->
-    <script>
-        // Try to load config.js if it exists
-        function loadConfig() {
-            var script = document.createElement('script');
-            script.src = 'config.js';
-            script.onerror = function() {
-                // Config file doesn't exist, that's okay
-                console.log('No config.js found, using environment variables or defaults');
-            };
-            document.head.appendChild(script);
-        }
-        loadConfig();
-    </script>
+    <!-- Configuration can be loaded by adding: <script src="config.js"></script> -->
     <script src="game.js"></script>
 </body>
 </html>
