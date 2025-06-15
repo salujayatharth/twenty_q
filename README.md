@@ -51,9 +51,18 @@ Twenty Questions is a classic guessing game where one player thinks of an object
 
 To use the LLM features, you'll need to configure your AI service:
 
+### Option 1: Environment Variable (Recommended)
+Set the `OPENAI_API_KEY` environment variable:
+```bash
+export OPENAI_API_KEY=your-openai-api-key-here
+```
+
+### Option 2: Configuration File
 1. Copy `config.example.js` to `config.js`
 2. Add your API credentials
 3. Select your preferred LLM provider
+
+**Note**: The environment variable takes precedence over the configuration file when both are available.
 
 ## Technologies Used
 
