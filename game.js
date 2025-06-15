@@ -101,8 +101,8 @@ Remember: You can only ask questions that can be answered with "Yes", "No", or "
         this.addSystemMessage(this.config.prompts.gameStartMessage);
         
         // Show first question after a short delay
-        setTimeout(() => {
-            this.askNextQuestion();
+        setTimeout(async () => {
+            await this.askNextQuestion();
         }, 1500);
     }
 
@@ -117,15 +117,25 @@ Remember: You can only ask questions that can be answered with "Yes", "No", or "
         this.addWelcomeMessage();
     }
 
-    askNextQuestion() {
-        if (this.questionsRemaining <= 0 || this.currentQuestionIndex >= this.questions.length) {
+    async askNextQuestion() {
+        if (this.questionsRemaining <= 0) {
             this.endGame(false);
             return;
         }
 
-        // In a real implementation, this would call an LLM API
-        // For now, we use our predefined questions with some intelligence
-        const question = this.getNextIntelligentQuestion();
+        let question;
+        try {
+            // Use LLM if available, otherwise fall back to predefined questions
+            if (llm) {
+                question = await llm.generateQuestion(this.gameHistory);
+            } else {
+                question = this.getNextIntelligentQuestion();
+            }
+        } catch (error) {
+            console.error('Error generating question:', error);
+            question = this.getNextIntelligentQuestion();
+        }
+        
         this.currentQuestion = question;
         
         this.addAIMessage(question);
@@ -157,7 +167,7 @@ Remember: You can only ask questions that can be answered with "Yes", "No", or "
         return fallbackQuestions[fallbackIndex];
     }
 
-    answerQuestion(answer) {
+    async answerQuestion(answer) {
         if (!this.gameActive) return;
 
         this.addUserMessage(answer.toUpperCase());
@@ -171,14 +181,14 @@ Remember: You can only ask questions that can be answered with "Yes", "No", or "
 
         // Simple guess logic - in a real implementation, this would use LLM reasoning
         if (this.shouldMakeGuess()) {
-            this.makeGuess();
+            await this.makeGuess();
         } else if (this.questionsRemaining <= 0) {
             this.endGame(false);
         } else {
             // Ask next question after a short delay
             this.addSystemMessage("Thinking...");
-            setTimeout(() => {
-                this.askNextQuestion();
+            setTimeout(async () => {
+                await this.askNextQuestion();
                 // Ensure scroll after async question asking
                 this.scrollToBottom();
             }, 2000);
@@ -197,23 +207,34 @@ Remember: You can only ask questions that can be answered with "Yes", "No", or "
         return this.questionsRemaining <= 3 || this.gameHistory.length >= 10;
     }
 
-    makeGuess() {
-        // In a real implementation, this would use LLM to make an intelligent guess
-        // For now, we'll make some simple guesses based on common answers
-        const guesses = [
-            "a smartphone",
-            "a book",
-            "a car",
-            "a computer",
-            "a dog",
-            "a tree",
-            "a chair",
-            "pizza",
-            "a television",
-            "a guitar"
-        ];
+    async makeGuess() {
+        let guess;
+        try {
+            // Use LLM if available, otherwise fall back to random guess
+            if (llm) {
+                const aiGuess = await llm.makeGuess(this.gameHistory);
+                guess = aiGuess;
+            } else {
+                // Fallback to simple random guess
+                const guesses = [
+                    "a smartphone",
+                    "a book", 
+                    "a car",
+                    "a computer",
+                    "a dog",
+                    "a tree",
+                    "a chair",
+                    "pizza",
+                    "a television",
+                    "a guitar"
+                ];
+                guess = guesses[Math.floor(Math.random() * guesses.length)];
+            }
+        } catch (error) {
+            console.error('Error making guess:', error);
+            guess = "something interesting";
+        }
 
-        const guess = guesses[Math.floor(Math.random() * guesses.length)];
         this.addAIMessage(`I think I know! Is it ${guess}?`);
         this.currentQuestionP.textContent = `Is it ${guess}?`;
         
@@ -246,8 +267,8 @@ Remember: You can only ask questions that can be answered with "Yes", "No", or "
             if (this.questionsRemaining <= 0) {
                 this.endGame(false);
             } else {
-                setTimeout(() => {
-                    this.askNextQuestion();
+                setTimeout(async () => {
+                    await this.askNextQuestion();
                     // Ensure scroll after async question asking
                     this.scrollToBottom();
                 }, 1500);
@@ -373,8 +394,8 @@ Remember: You can only ask questions that can be answered with "Yes", "No", or "
 }
 
 // Global functions for button clicks
-function answerQuestion(answer) {
-    game.answerQuestion(answer);
+async function answerQuestion(answer) {
+    await game.answerQuestion(answer);
 }
 
 // Initialize the game when the page loads
@@ -383,30 +404,133 @@ document.addEventListener('DOMContentLoaded', function() {
     game = new TwentyQuestionsGame();
 });
 
-// LLM Integration placeholder
-// In a real implementation, you would add API calls here
+// LLM Integration with OpenAI API
 class LLMIntegration {
-    constructor(apiKey, provider = 'openai') {
+    constructor(apiKey, provider = 'openai', model = 'gpt-3.5-turbo') {
         this.apiKey = apiKey;
         this.provider = provider;
+        this.model = model;
+        this.apiUrl = 'https://api.openai.com/v1/chat/completions';
     }
 
     async generateQuestion(gameHistory) {
-        // Placeholder for LLM API call
-        // This would send the game history to an LLM and get a smart question back
-        console.log('LLM Integration: Generate question based on history:', gameHistory);
-        
-        // For now, return a placeholder
-        return "This would be an AI-generated question based on previous answers";
+        try {
+            const config = loadConfiguration();
+            const systemPrompt = config?.prompts?.systemPrompt || 
+                'You are an AI playing Twenty Questions as the guesser. Ask strategic yes/no questions to guess what the human is thinking of.';
+
+            // Build context from game history
+            let context = systemPrompt + '\n\nGame History:\n';
+            if (gameHistory.length === 0) {
+                context += 'No questions have been asked yet. Start with a broad categorical question.';
+            } else {
+                gameHistory.forEach((entry, index) => {
+                    context += `Q${index + 1}: ${entry.question}\nA${index + 1}: ${entry.answer}\n`;
+                });
+                context += '\nBased on the above answers, ask your next strategic yes/no question to narrow down the possibilities.';
+            }
+
+            const response = await fetch(this.apiUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${this.apiKey}`
+                },
+                body: JSON.stringify({
+                    model: this.model,
+                    messages: [
+                        {
+                            role: 'system',
+                            content: context
+                        },
+                        {
+                            role: 'user',
+                            content: 'Ask your next question. Respond with only the question, nothing else.'
+                        }
+                    ],
+                    max_tokens: 50,
+                    temperature: 0.7
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(`API request failed: ${response.status}`);
+            }
+
+            const data = await response.json();
+            return data.choices[0].message.content.trim();
+        } catch (error) {
+            console.error('LLM API Error:', error);
+            // Fallback to intelligent default question
+            return this.getFallbackQuestion(gameHistory);
+        }
     }
 
     async makeGuess(gameHistory) {
-        // Placeholder for LLM API call
-        // This would analyze all answers and make an intelligent guess
-        console.log('LLM Integration: Make guess based on history:', gameHistory);
+        try {
+            const config = loadConfiguration();
+            const systemPrompt = config?.prompts?.systemPrompt || 
+                'You are an AI playing Twenty Questions as the guesser. Make your best guess based on the answers provided.';
+
+            let context = systemPrompt + '\n\nGame History:\n';
+            gameHistory.forEach((entry, index) => {
+                context += `Q${index + 1}: ${entry.question}\nA${index + 1}: ${entry.answer}\n`;
+            });
+            context += '\nBased on all the above answers, make your best guess about what the human is thinking of. Respond with only your guess, nothing else.';
+
+            const response = await fetch(this.apiUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${this.apiKey}`
+                },
+                body: JSON.stringify({
+                    model: this.model,
+                    messages: [
+                        {
+                            role: 'system',
+                            content: context
+                        },
+                        {
+                            role: 'user',
+                            content: 'Make your final guess. What am I thinking of?'
+                        }
+                    ],
+                    max_tokens: 30,
+                    temperature: 0.5
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(`API request failed: ${response.status}`);
+            }
+
+            const data = await response.json();
+            return data.choices[0].message.content.trim();
+        } catch (error) {
+            console.error('LLM API Error:', error);
+            // Fallback to a generic guess
+            return "I'm having trouble connecting to my AI brain, but based on your answers, I'll guess it's something interesting!";
+        }
+    }
+
+    getFallbackQuestion(gameHistory) {
+        // Intelligent fallback questions based on game history length
+        const fallbackQuestions = [
+            "Is it a living thing?",
+            "Is it bigger than a car?",
+            "Can you hold it in your hand?",
+            "Is it found indoors?",
+            "Is it made by humans?",
+            "Does it move on its own?",
+            "Is it used for entertainment?",
+            "Is it electronic?",
+            "Can you eat it?",
+            "Is it made of metal?"
+        ];
         
-        // For now, return a placeholder
-        return "This would be an AI-generated guess";
+        const questionIndex = gameHistory.length % fallbackQuestions.length;
+        return fallbackQuestions[questionIndex];
     }
 }
 
@@ -441,5 +565,5 @@ function loadConfiguration() {
 let llm = null;
 const config = loadConfiguration();
 if (config && config.llm && config.llm.apiKey && config.llm.apiKey !== 'your-api-key-here') {
-    llm = new LLMIntegration(config.llm.apiKey, config.llm.provider);
+    llm = new LLMIntegration(config.llm.apiKey, config.llm.provider, config.llm.model);
 }
